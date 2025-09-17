@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Fake YS JRPG</title>
+  <title>Fake YS JRPG - Tilemap + Animation</title>
   <style>
     body {
       background-color: #111;
@@ -22,65 +22,152 @@
       border: 4px solid #0f0;
       image-rendering: pixelated;
       overflow: hidden;
+      box-sizing: content-box;
     }
 
+    /* 타일 */
+    .tile {
+      width: 16px;
+      height: 16px;
+      position: absolute;
+      box-sizing: border-box;
+    }
+    .tile.ground {
+      background-color: #2a7f2a;
+    }
+    .tile.tree {
+      background-color: #4b2e05;
+      border: 1px solid #362603;
+    }
+
+    /* 플레이어 */
     #player {
       width: 16px;
       height: 16px;
-      background-color: #0f0;
       position: absolute;
-      top: 112px; /* 중앙 위치 */
-      left: 152px; /* 중앙 위치 */
       border: 1px solid #070;
       box-sizing: border-box;
+      transition: background-color 0.15s;
     }
 
-    #info {
-      margin-top: 10px;
-      font-size: 14px;
-    }
   </style>
 </head>
 <body>
   <h1>🔥 Fake YS JRPG</h1>
-  <div id="game-box">
-    <div id="player"></div>
-  </div>
-  <div id="info">Use arrow keys to move the hero.</div>
+  <div id="game-box"></div>
+  <div id="info">Use arrow keys to move the hero. Can't walk through trees.</div>
 
-  <script>
-    const player = document.getElementById('player');
-    const gameBox = document.getElementById('game-box');
+<script>
+  const gameBox = document.getElementById('game-box');
 
-    // 플레이어 위치 (픽셀 단위)
-    let posX = 152;
-    let posY = 112;
+  const TILE_SIZE = 16;
+  const MAP_WIDTH = 20;
+  const MAP_HEIGHT = 15;
 
-    // 이동 간격 (픽셀)
-    const step = 16;
+  // 0: ground, 1: tree (충돌 있음)
+  const mapData = [
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0],
+    [0,1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,0,0,0],
+    [0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,0,0],
+    [0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,1,1,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0],
+    [0,0,0,1,1,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0],
+    [0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+  ];
 
-    // 게임 박스 크기
-    const maxX = gameBox.clientWidth - player.clientWidth;
-    const maxY = gameBox.clientHeight - player.clientHeight;
+  // 맵 렌더링
+  function drawMap() {
+    for (let y = 0; y < MAP_HEIGHT; y++) {
+      for (let x = 0; x < MAP_WIDTH; x++) {
+        const tile = document.createElement('div');
+        tile.classList.add('tile');
+        tile.style.top = y * TILE_SIZE + 'px';
+        tile.style.left = x * TILE_SIZE + 'px';
 
-    window.addEventListener('keydown', (e) => {
-      switch (e.key) {
-        case 'ArrowUp':
-          posY = Math.max(0, posY - step);
-          break;
-        case 'ArrowDown':
-          posY = Math.min(maxY, posY + step);
-          break;
-        case 'ArrowLeft':
-          posX = Math.max(0, posX - step);
-          break;
-        case 'ArrowRight':
-          posX = Math.min(maxX, posX + step);
-          break;
+        if(mapData[y][x] === 0) {
+          tile.classList.add('ground');
+        } else if(mapData[y][x] === 1) {
+          tile.classList.add('tree');
+        }
+
+        gameBox.appendChild(tile);
       }
-      player.style.top = posY + 'px';
-      player.style.left = posX + 'px';
-    });
-  </script>
+    }
+  }
+
+  // 플레이어 초기 위치 (타일 기준)
+  let playerPos = { x: 10, y: 7 };
+  const player = document.createElement('div');
+  player.id = 'player';
+  gameBox.appendChild(player);
+
+  // 애니메이션 프레임
+  let animationFrame = 0;
+
+  // 플레이어 색깔 프레임 (단순 걷기 애니메이션)
+  function updatePlayerAnimation() {
+    if(animationFrame % 2 === 0) {
+      player.style.backgroundColor = '#0f0'; // 초록
+    } else {
+      player.style.backgroundColor = '#0b0'; // 짙은 초록
+    }
+  }
+
+  // 플레이어 위치 업데이트
+  function updatePlayerPosition() {
+    player.style.left = playerPos.x * TILE_SIZE + 'px';
+    player.style.top = playerPos.y * TILE_SIZE + 'px';
+  }
+
+  updatePlayerPosition();
+  updatePlayerAnimation();
+
+  // 충돌 체크 함수
+  function isBlocked(x, y) {
+    if(x < 0 || x >= MAP_WIDTH || y < 0 || y >= MAP_HEIGHT) return true;
+    return mapData[y][x] === 1; // 나무 타일은 막힘
+  }
+
+  // 이동 함수
+  function movePlayer(dx, dy) {
+    const newX = playerPos.x + dx;
+    const newY = playerPos.y + dy;
+    if (!isBlocked(newX, newY)) {
+      playerPos.x = newX;
+      playerPos.y = newY;
+      animationFrame++;
+      updatePlayerPosition();
+      updatePlayerAnimation();
+    }
+  }
+
+  // 키보드 입력 처리
+  window.addEventListener('keydown', e => {
+    switch(e.key) {
+      case 'ArrowUp':
+        movePlayer(0, -1);
+        break;
+      case 'ArrowDown':
+        movePlayer(0, 1);
+        break;
+      case 'ArrowLeft':
+        movePlayer(-1, 0);
+        break;
+      case 'ArrowRight':
+        movePlayer(1, 0);
+        break;
+    }
+  });
+
+  drawMap();
+</script>
 </body>
 </html>
