@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Fake Ys JRPG</title>
+  <style>
+    body {
+      background-color: #000;
+      color: #fff;
+      font-family: 'Press Start 2P', monospace;
+      padding: 0;
+      margin: 0;
+    }
+
+    #game {
+      width: 640px;
+      height: 480px;
+      margin: 20px auto;
+      background: linear-gradient(#222, #000);
+      padding: 20px;
+      border: 5px solid #444;
+      box-shadow: 0 0 20px #ff0000;
+    }
+
+    .title-screen {
+      text-align: center;
+      font-size: 24px;
+      animation: flicker 1s infinite alternate;
+    }
+
+    #dialogue-box {
+      margin-top: 50px;
+      background-color: #111;
+      padding: 10px;
+      border: 2px solid #555;
+      min-height: 100px;
+      font-size: 14px;
+    }
+
+    #actions {
+      margin-top: 20px;
+    }
+
+    button {
+      margin: 5px;
+      padding: 10px;
+      font-family: inherit;
+      font-size: 14px;
+      background-color: #333;
+      color: white;
+      border: 1px solid #666;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #444;
+    }
+
+    @keyframes flicker {
+      from { color: #fff; }
+      to { color: #ff0000; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="game">
+  <div class="title-screen" id="title">🌟 Y's: Eternal Scam — Press Start</div>
+  <div id="dialogue-box"></div>
+  <div id="actions"></div>
+</div>
+
+<script>
+  const dialogueBox = document.getElementById('dialogue-box');
+  const actions = document.getElementById('actions');
+  const title = document.getElementById('title');
+
+  let started = false;
+  let hp = 100;
+  let enemyHp = 50;
+
+  const introLines = [
+    "You are Adool, the swordsman with no direction.",
+    "A dark force has awakened in the lands of Scamoria.",
+    "You must fight the Shadow of Budget Cuts!",
+    "Prepare for battle..."
+  ];
+
+  function startGame() {
+    if (!started) {
+      started = true;
+      title.textContent = "Y's: Eternal Scam";
+      nextIntroLine();
+    }
+  }
+
+  let introIndex = 0;
+
+  function nextIntroLine() {
+    if (introIndex < introLines.length) {
+      dialogueBox.textContent = introLines[introIndex++];
+      setTimeout(nextIntroLine, 2000);
+    } else {
+      startBattle();
+    }
+  }
+
+  function startBattle() {
+    showDialogue("⚔️ A wild 'Budget Shadow' appears!");
+    showActions([
+      { label: "Attack", handler: attack },
+      { label: "Heal", handler: heal },
+      { label: "Run", handler: runAway }
+    ]);
+  }
+
+  function showDialogue(text) {
+    dialogueBox.textContent = text;
+  }
+
+  function showActions(buttons) {
+    actions.innerHTML = '';
+    buttons.forEach(btn => {
+      const b = document.createElement('button');
+      b.textContent = btn.label;
+      b.onclick = btn.handler;
+      actions.appendChild(b);
+    });
+  }
+
+  function attack() {
+    const damage = Math.floor(Math.random() * 15) + 5;
+    enemyHp -= damage;
+    if (enemyHp <= 0) {
+      showDialogue("🎉 You defeated the Budget Shadow!");
+      showActions([{ label: "Restart", handler: () => location.reload() }]);
+    } else {
+      showDialogue(`You hit for ${damage} damage! Enemy HP: ${enemyHp}`);
+      enemyTurn();
+    }
+  }
+
+  function heal() {
+    const amount = Math.floor(Math.random() * 10) + 10;
+    hp = Math.min(100, hp + amount);
+    showDialogue(`You healed ${amount} HP. Current HP: ${hp}`);
+    enemyTurn();
+  }
+
+  function runAway() {
+    showDialogue("You tried to run... but failed. 😂");
+    enemyTurn();
+  }
+
+  function enemyTurn() {
+    setTimeout(() => {
+      const damage = Math.floor(Math.random() * 12) + 4;
+      hp -= damage;
+      if (hp <= 0) {
+        showDialogue("💀 You were defeated...");
+        showActions([{ label: "Retry", handler: () => location.reload() }]);
+      } else {
+        showDialogue(`Enemy hits you for ${damage} damage! HP: ${hp}`);
+      }
+    }, 1000);
+  }
+
+  // Start on click
+  document.getElementById('game').onclick = startGame;
+</script>
+
+</body>
+</html>
