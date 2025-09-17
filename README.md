@@ -30,4 +30,4 @@
 ```bash
 git clone https://github.com/gurtlssk/gil.git
 cd yourgame
-good day! time to make
+good day!, time to make
