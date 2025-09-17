@@ -2,172 +2,85 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Fake Ys JRPG</title>
+  <title>Fake YS JRPG</title>
   <style>
     body {
-      background-color: #000;
-      color: #fff;
-      font-family: 'Press Start 2P', monospace;
-      padding: 0;
-      margin: 0;
-    }
-
-    #game {
-      width: 640px;
-      height: 480px;
-      margin: 20px auto;
-      background: linear-gradient(#222, #000);
-      padding: 20px;
-      border: 5px solid #444;
-      box-shadow: 0 0 20px #ff0000;
-    }
-
-    .title-screen {
-      text-align: center;
-      font-size: 24px;
-      animation: flicker 1s infinite alternate;
-    }
-
-    #dialogue-box {
-      margin-top: 50px;
       background-color: #111;
-      padding: 10px;
-      border: 2px solid #555;
-      min-height: 100px;
+      color: #0f0;
+      font-family: monospace;
+      padding: 20px;
+      text-align: center;
+      user-select: none;
+    }
+
+    #game-box {
+      width: 320px;
+      height: 240px;
+      margin: 20px auto;
+      background-color: #222;
+      position: relative;
+      border: 4px solid #0f0;
+      image-rendering: pixelated;
+      overflow: hidden;
+    }
+
+    #player {
+      width: 16px;
+      height: 16px;
+      background-color: #0f0;
+      position: absolute;
+      top: 112px; /* 중앙 위치 */
+      left: 152px; /* 중앙 위치 */
+      border: 1px solid #070;
+      box-sizing: border-box;
+    }
+
+    #info {
+      margin-top: 10px;
       font-size: 14px;
-    }
-
-    #actions {
-      margin-top: 20px;
-    }
-
-    button {
-      margin: 5px;
-      padding: 10px;
-      font-family: inherit;
-      font-size: 14px;
-      background-color: #333;
-      color: white;
-      border: 1px solid #666;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #444;
-    }
-
-    @keyframes flicker {
-      from { color: #fff; }
-      to { color: #ff0000; }
     }
   </style>
 </head>
 <body>
+  <h1>🔥 Fake YS JRPG</h1>
+  <div id="game-box">
+    <div id="player"></div>
+  </div>
+  <div id="info">Use arrow keys to move the hero.</div>
 
-<div id="game">
-  <div class="title-screen" id="title">🌟 Y's: Eternal Scam — Press Start</div>
-  <div id="dialogue-box"></div>
-  <div id="actions"></div>
-</div>
+  <script>
+    const player = document.getElementById('player');
+    const gameBox = document.getElementById('game-box');
 
-<script>
-  const dialogueBox = document.getElementById('dialogue-box');
-  const actions = document.getElementById('actions');
-  const title = document.getElementById('title');
+    // 플레이어 위치 (픽셀 단위)
+    let posX = 152;
+    let posY = 112;
 
-  let started = false;
-  let hp = 100;
-  let enemyHp = 50;
+    // 이동 간격 (픽셀)
+    const step = 16;
 
-  const introLines = [
-    "You are Adool, the swordsman with no direction.",
-    "A dark force has awakened in the lands of Scamoria.",
-    "You must fight the Shadow of Budget Cuts!",
-    "Prepare for battle..."
-  ];
+    // 게임 박스 크기
+    const maxX = gameBox.clientWidth - player.clientWidth;
+    const maxY = gameBox.clientHeight - player.clientHeight;
 
-  function startGame() {
-    if (!started) {
-      started = true;
-      title.textContent = "Y's: Eternal Scam";
-      nextIntroLine();
-    }
-  }
-
-  let introIndex = 0;
-
-  function nextIntroLine() {
-    if (introIndex < introLines.length) {
-      dialogueBox.textContent = introLines[introIndex++];
-      setTimeout(nextIntroLine, 2000);
-    } else {
-      startBattle();
-    }
-  }
-
-  function startBattle() {
-    showDialogue("⚔️ A wild 'Budget Shadow' appears!");
-    showActions([
-      { label: "Attack", handler: attack },
-      { label: "Heal", handler: heal },
-      { label: "Run", handler: runAway }
-    ]);
-  }
-
-  function showDialogue(text) {
-    dialogueBox.textContent = text;
-  }
-
-  function showActions(buttons) {
-    actions.innerHTML = '';
-    buttons.forEach(btn => {
-      const b = document.createElement('button');
-      b.textContent = btn.label;
-      b.onclick = btn.handler;
-      actions.appendChild(b);
-    });
-  }
-
-  function attack() {
-    const damage = Math.floor(Math.random() * 15) + 5;
-    enemyHp -= damage;
-    if (enemyHp <= 0) {
-      showDialogue("🎉 You defeated the Budget Shadow!");
-      showActions([{ label: "Restart", handler: () => location.reload() }]);
-    } else {
-      showDialogue(`You hit for ${damage} damage! Enemy HP: ${enemyHp}`);
-      enemyTurn();
-    }
-  }
-
-  function heal() {
-    const amount = Math.floor(Math.random() * 10) + 10;
-    hp = Math.min(100, hp + amount);
-    showDialogue(`You healed ${amount} HP. Current HP: ${hp}`);
-    enemyTurn();
-  }
-
-  function runAway() {
-    showDialogue("You tried to run... but failed. 😂");
-    enemyTurn();
-  }
-
-  function enemyTurn() {
-    setTimeout(() => {
-      const damage = Math.floor(Math.random() * 12) + 4;
-      hp -= damage;
-      if (hp <= 0) {
-        showDialogue("💀 You were defeated...");
-        showActions([{ label: "Retry", handler: () => location.reload() }]);
-      } else {
-        showDialogue(`Enemy hits you for ${damage} damage! HP: ${hp}`);
+    window.addEventListener('keydown', (e) => {
+      switch (e.key) {
+        case 'ArrowUp':
+          posY = Math.max(0, posY - step);
+          break;
+        case 'ArrowDown':
+          posY = Math.min(maxY, posY + step);
+          break;
+        case 'ArrowLeft':
+          posX = Math.max(0, posX - step);
+          break;
+        case 'ArrowRight':
+          posX = Math.min(maxX, posX + step);
+          break;
       }
-    }, 1000);
-  }
-
-  // Start on click
-  document.getElementById('game').onclick = startGame;
-</script>
-
+      player.style.top = posY + 'px';
+      player.style.left = posX + 'px';
+    });
+  </script>
 </body>
 </html>
