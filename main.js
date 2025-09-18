@@ -58,8 +58,10 @@ function monsterTurn(){
 
 attackBtn.addEventListener('click',() => {
     const result = battle.playerAttack();
-    if(!result.success) return;
-
+    if(!result.success){
+        renderLogs([result.message]);
+        return;
+    }
     updateStatus();
     renderLogs(battle.getLogs());
     if(!checkGameOver()){
